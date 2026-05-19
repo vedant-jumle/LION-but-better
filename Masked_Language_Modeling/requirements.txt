@@ -5,6 +5,6 @@ mosaicml-streaming==0.4.1
 omegaconf==2.2.3
 transformers==4.28.1
 # need a newer version of triton
-triton==2.0.0
+triton
 opt_einsum
 mamba-ssm
