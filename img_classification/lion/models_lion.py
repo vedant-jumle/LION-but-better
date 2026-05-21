@@ -4,7 +4,11 @@ import torch.nn as nn
 import numpy as np
 from functools import partial
 
-from timm.models.vision_transformer import _cfg, Mlp, HybridEmbed, PatchEmbed
+from timm.models.vision_transformer import _cfg, Mlp, PatchEmbed
+try:
+    from timm.models.vision_transformer import HybridEmbed
+except ImportError:
+    HybridEmbed = None
 from timm.models.registry import register_model
 from timm.models.layers import trunc_normal_, DropPath
 
