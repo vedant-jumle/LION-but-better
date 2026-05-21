@@ -30,7 +30,7 @@ echo "=== GPU info ==="
 nvidia-smi
 
 echo "=== Starting LION-D Tiny + learnable beta training ==="
-python main_lion.py \
+torchrun --nproc_per_node=1 --master_port=29501 main_lion.py \
     --model lion_tiny_patch16_224 \
     --data-path $DATA \
     --batch-size 256 \
