@@ -12,7 +12,7 @@
 
 set -e
 
-REPO=/scratch/vvjumle/LION-but-better/img_classification
+REPO=/scratch/vvjumle/LION-but-better-experiments/img_classification
 DATA=/scratch/vvjumle/imagenet
 OUTPUT=/scratch/vvjumle/checkpoints/lion_tiny_decay_beta
 
