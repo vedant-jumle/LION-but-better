@@ -18,12 +18,8 @@ conda activate LION
 SRC=/scratch/vvjumle/imagenet/data
 DST=/scratch/vvjumle/imagenet-folder
 
-echo "=== Converting train split ==="
-python /scratch/vvjumle/LION-but-better-experiments/img_classification/convert_imagenet.py \
-    --split train --src $SRC --dst $DST
-
-echo "=== Converting validation split ==="
-python /scratch/vvjumle/LION-but-better-experiments/img_classification/convert_imagenet.py \
-    --split validation --src $SRC --dst $DST
+echo "=== Preparing 500K train subset + full val ==="
+python /scratch/vvjumle/LION-but-better-experiments/img_classification/prepare_imagenet_subset.py \
+    --src $SRC --dst $DST --train_n 500000
 
 echo "=== Done ==="
