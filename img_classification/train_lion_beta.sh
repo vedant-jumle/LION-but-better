@@ -36,7 +36,7 @@ torchrun --nproc_per_node=1 --master_port=29501 main_lion.py \
     --batch-size 256 \
     --mask_type Decay \
     --format Attention \
-    --epochs 300 \
+    --epochs 30 \
     --output_dir $OUTPUT \
     --num_workers 8
 
