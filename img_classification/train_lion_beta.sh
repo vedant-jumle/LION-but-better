@@ -13,7 +13,7 @@
 set -e
 
 REPO=/scratch/vvjumle/LION-but-better-experiments/img_classification
-DATA=/scratch/vvjumle/imagenet
+DATA=/scratch/vvjumle/imagenet-folder
 OUTPUT=/scratch/vvjumle/checkpoints/lion_tiny_decay_beta
 
 mkdir -p /scratch/vvjumle/logs
