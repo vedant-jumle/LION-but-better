@@ -51,6 +51,8 @@ def process_split(parquet_files, out_dir, target_n, seed=42):
         images = tbl['image'].to_pylist()
 
         for img_data, label in zip(images, labels):
+            if label < 0 or label >= 1000:
+                continue
             if per_class_quota and saved[label] >= per_class_quota[label]:
                 continue
 
