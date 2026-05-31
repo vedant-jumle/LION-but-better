@@ -33,7 +33,7 @@ echo "=== Starting LION-D Tiny training ==="
 torchrun --nproc_per_node=1 --master_port=29500 main_lion.py \
     --model lion_tiny_patch16_224 \
     --data-path $DATA \
-    --batch-size 256 \
+    --batch-size 64 \
     --mask_type Decay \
     --format RNN \
     --epochs 30 \
