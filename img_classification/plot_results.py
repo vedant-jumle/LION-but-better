@@ -1,15 +1,23 @@
 """
-Plot training curves comparing baseline vs beta model.
-Usage: python plot_results.py \
-    --baseline /scratch/vvjumle/checkpoints/lion_tiny_decay/log.txt \
-    --beta     /scratch/vvjumle/checkpoints/lion_tiny_decay_beta/log.txt \
-    --out      results.png
+Plot training curves for multiple LION-D variants.
+Usage:
+  python plot_results.py \
+    --logs label1:/path/to/log1.txt label2:/path/to/log2.txt ... \
+    --out results.png
+
+Example:
+  python plot_results.py \
+    --logs "Learned:/scratch/vvjumle/checkpoints/lion_tiny_learned/log.txt" \
+           "Fixed 0.5:/scratch/vvjumle/checkpoints/lion_tiny_fixed05/log.txt" \
+           "Fixed 0.8:/scratch/vvjumle/checkpoints/lion_tiny_fixed08/log.txt" \
+           "Fixed 0.9:/scratch/vvjumle/checkpoints/lion_tiny_fixed09/log.txt" \
+    --out results.png
 """
 import argparse
 import json
-import os
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
+import matplotlib.cm as cm
+import numpy as np
 
 
 def load_log(path):
@@ -26,53 +34,46 @@ def load_log(path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--baseline', required=True)
-    parser.add_argument('--beta', required=True)
+    parser.add_argument('--logs', nargs='+', required=True,
+                        help='label:path pairs, e.g. "Learned:/path/log.txt"')
     parser.add_argument('--out', default='results.png')
     args = parser.parse_args()
 
-    b_epochs, b_loss, b_acc1, b_acc5 = load_log(args.baseline)
-    e_epochs, e_loss, e_acc1, e_acc5 = load_log(args.beta)
+    runs = []
+    for entry in args.logs:
+        label, path = entry.split(':', 1)
+        epochs, loss, acc1, acc5 = load_log(path)
+        runs.append((label, epochs, loss, acc1, acc5))
 
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
-    fig.suptitle('LION-D Tiny: Baseline vs Learned β', fontsize=13)
+    colors = cm.tab10(np.linspace(0, 0.9, len(runs)))
 
-    # Train loss
-    axes[0].plot(b_epochs, b_loss, label='Baseline', color='steelblue')
-    axes[0].plot(e_epochs, e_loss, label='Learned β', color='darkorange')
-    axes[0].set_xlabel('Epoch')
-    axes[0].set_ylabel('Train Loss')
-    axes[0].set_title('Training Loss')
-    axes[0].legend()
-    axes[0].grid(True, alpha=0.3)
+    fig, axes = plt.subplots(1, 3, figsize=(16, 4))
+    fig.suptitle('LION-D Tiny: Learned vs Fixed Decay λ', fontsize=13)
 
-    # Val Top-1
-    axes[1].plot(b_epochs, b_acc1, label='Baseline', color='steelblue')
-    axes[1].plot(e_epochs, e_acc1, label='Learned β', color='darkorange')
-    axes[1].set_xlabel('Epoch')
-    axes[1].set_ylabel('Top-1 Accuracy (%)')
-    axes[1].set_title('Validation Top-1 Accuracy')
-    axes[1].legend()
-    axes[1].grid(True, alpha=0.3)
+    for (label, epochs, loss, acc1, acc5), color in zip(runs, colors):
+        axes[0].plot(epochs, loss, label=label, color=color)
+        axes[1].plot(epochs, acc1, label=label, color=color)
+        axes[2].plot(epochs, acc5, label=label, color=color)
 
-    # Val Top-5
-    axes[2].plot(b_epochs, b_acc5, label='Baseline', color='steelblue')
-    axes[2].plot(e_epochs, e_acc5, label='Learned β', color='darkorange')
-    axes[2].set_xlabel('Epoch')
-    axes[2].set_ylabel('Top-5 Accuracy (%)')
-    axes[2].set_title('Validation Top-5 Accuracy')
-    axes[2].legend()
-    axes[2].grid(True, alpha=0.3)
+    for ax, title, ylabel in zip(axes,
+                                  ['Training Loss', 'Validation Top-1', 'Validation Top-5'],
+                                  ['Loss', 'Top-1 Accuracy (%)', 'Top-5 Accuracy (%)']):
+        ax.set_xlabel('Epoch')
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        ax.legend(fontsize=8)
+        ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
     plt.savefig(args.out, dpi=150, bbox_inches='tight')
-    print(f"Saved to {args.out}")
+    print(f"Saved to {args.out}\n")
 
-    # Print summary
-    if b_acc1:
-        print(f"\nBaseline   — best Top-1: {max(b_acc1):.2f}% @ epoch {b_epochs[b_acc1.index(max(b_acc1))]}")
-    if e_acc1:
-        print(f"Learned β  — best Top-1: {max(e_acc1):.2f}% @ epoch {e_epochs[e_acc1.index(max(e_acc1))]}")
+    print(f"{'Variant':<15} {'Best Top-1':>10} {'@ Epoch':>8} {'Best Top-5':>10}")
+    print("-" * 48)
+    for label, epochs, loss, acc1, acc5 in runs:
+        if acc1:
+            best_idx = acc1.index(max(acc1))
+            print(f"{label:<15} {max(acc1):>10.2f}% {epochs[best_idx]:>8} {max(acc5):>10.2f}%")
 
 
 if __name__ == '__main__':

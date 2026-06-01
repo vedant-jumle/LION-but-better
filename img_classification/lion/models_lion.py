@@ -123,8 +123,6 @@ class Lion_Attention(nn.Module):
             if order == 'S':
                 self.a2_i = nn.Linear(dim, num_heads)
 
-        self.beta = nn.Parameter(torch.zeros(num_heads))  # sigmoid(0)=0.5, matches original /2
-
         if order == 'S':
             N = num_patches
             order = torch.range(0,N-2)
@@ -189,8 +187,6 @@ class Lion_Attention(nn.Module):
             if self.mask_type == 'Selective':
                 a_i =  torch.cat((torch.ones(B,H,1).to(device),a_i,torch.ones(B,H,1).to(device)),dim=-1)
 
-            beta = torch.sigmoid(self.beta)  # (H,) learnable per-head diagonal correction
-
             Si_f = q.new_zeros((B, H, D, D)).to(device)
             Si_b = q.new_zeros((B, H, D, D)).to(device)
 
@@ -225,8 +221,8 @@ class Lion_Attention(nn.Module):
                     Si_f = torch.einsum("nh,nhdm->nhdm", a_i[:,:,l], Si_f) + KVi
                     Zi = torch.einsum("nh,nhd->nhd", a_i[:,:,l], Zi) + Ki
 
-                cf[:,:,ind] += torch.einsum("nhd,nhd->nh", Qi, Zi - torch.einsum("h,nhd->nhd", beta, Ki))
-                x[:,:,ind] += torch.einsum("nhd,nhdm->nhm", Qi, Si_f - torch.einsum("h,nhdm->nhdm", beta, KVi))
+                cf[:,:,ind] += torch.einsum("nhd,nhd->nh", Qi, Zi - Ki/2) 
+                x[:,:,ind] += torch.einsum("nhd,nhdm->nhm", Qi, (Si_f - KVi /2))
 
                 # Backward RNN
                 Ki = k[:,:,ind_b,:]
@@ -244,9 +240,9 @@ class Lion_Attention(nn.Module):
                     Si_b = torch.einsum("nh,nhdm->nhdm", a_i[:,:,N-l+1], Si_b) + KVi
                     Zi_b = torch.einsum("nh,nhd->nhd", a_i[:,:,N-l+1], Zi_b) + Ki
                 
-                x[:,:,ind_b] += torch.einsum("nhd,nhdm->nhm", Qi, Si_b - torch.einsum("h,nhdm->nhdm", beta, KVi))
-                cf[:,:,ind_b] += torch.einsum("nhd,nhd->nh", Qi, Zi_b - torch.einsum("h,nhd->nhd", beta, Ki))
-
+                x[:,:,ind_b] += torch.einsum("nhd,nhdm->nhm", Qi, (Si_b - KVi /2))
+                cf[:,:,ind_b] += torch.einsum("nhd,nhd->nh", Qi, Zi_b - Ki/2)
+            
             if self.order == 'S':
                 Si_f = q.new_zeros((B, H, D, D)).to(device)
                 Si_b = q.new_zeros((B, H, D, D)).to(device)
@@ -278,8 +274,8 @@ class Lion_Attention(nn.Module):
                         Si_f = torch.einsum("nh,nhdm->nhdm", a2_i[:,:,l], Si_f) + KVi
                         Zi = torch.einsum("nh,nhd->nhd", a2_i[:,:,l], Zi) + Ki
 
-                    cf[:,:,ind] += torch.einsum("nhd,nhd->nh", Qi, Zi - torch.einsum("h,nhd->nhd", beta, Ki))
-                    x[:,:,ind] += torch.einsum("nhd,nhdm->nhm", Qi, Si_f - torch.einsum("h,nhdm->nhdm", beta, KVi))
+                    cf[:,:,ind] += torch.einsum("nhd,nhd->nh", Qi, Zi - Ki/2) 
+                    x[:,:,ind] += torch.einsum("nhd,nhdm->nhm", Qi, (Si_f - KVi /2))
 
                     # Backward RNN
                     Ki = k[:,:,ind_b,:]
@@ -297,8 +293,8 @@ class Lion_Attention(nn.Module):
                         Si_b = torch.einsum("nh,nhdm->nhdm", a2_i[:,:,N-l+1], Si_b) + KVi
                         Zi_b = torch.einsum("nh,nhd->nhd", a2_i[:,:,N-l+1], Zi_b) + Ki
                     
-                    x[:,:,ind_b] += torch.einsum("nhd,nhdm->nhm", Qi, Si_b - torch.einsum("h,nhdm->nhdm", beta, KVi))
-                    cf[:,:,ind_b] += torch.einsum("nhd,nhd->nh", Qi, Zi_b - torch.einsum("h,nhd->nhd", beta, Ki))
+                    x[:,:,ind_b] += torch.einsum("nhd,nhdm->nhm", Qi, (Si_b - KVi /2))
+                    cf[:,:,ind_b] += torch.einsum("nhd,nhd->nh", Qi, Zi_b - Ki/2)
 
             x = torch.einsum("nhld,nhl->nhld",x, 1 / cf).transpose(1, 2).reshape(B, N, C) 
             
@@ -381,7 +377,7 @@ class Lion_VisionTransformer(nn.Module):
     """
     def __init__(self, img_size=224, patch_size=16, in_chans=3, num_classes=1000, embed_dim=768, depth=12,
                  num_heads=12, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
-                 drop_path_rate=0., hybrid_backbone=None, norm_layer=nn.LayerNorm,
+                 drop_path_rate=0., hybrid_backbone=None, norm_layer=nn.LayerNorm, 
                  mask_type='Selective', format='Attention', order='Normal', chunk_size=32, pos_emb=True, cls_tok=False, **kwargs):
         super().__init__()
         self.num_classes = num_classes

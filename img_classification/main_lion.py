@@ -195,6 +195,8 @@ def get_args_parser():
                         type=str, help='Order of patches')
     parser.add_argument('--format', default='Attention', choices=['Attention', 'RNN', 'Chunk'],
                         type=str, help='Attention format')
+    parser.add_argument('--fixed_decay', type=float, default=None,
+                        help='Fix decay lambda to this value (0-1) and freeze. Default None = learned.')
     return parser
 
 
@@ -359,6 +361,14 @@ def main(args):
             resume='')
 
     model_without_ddp = model
+    if args.fixed_decay is not None:
+        import math
+        logit_val = math.log(args.fixed_decay / (1.0 - args.fixed_decay))
+        for name, param in model_without_ddp.named_parameters():
+            if 'a_i' in name or 'a2_i' in name:
+                param.data.fill_(logit_val)
+                param.requires_grad = False
+
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=True)
         model_without_ddp = model.module
