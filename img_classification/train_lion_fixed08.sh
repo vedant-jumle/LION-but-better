@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --gpus-per-task=1
 #SBATCH --mem-per-cpu=4G
-#SBATCH --account=Education-EEMCS-MSc-DSAIT
+#SBATCH --account=education-eemcs-courses-dsait4095
 #SBATCH --output=/scratch/vvjumle/logs/lion_f08_%j.out
 #SBATCH --error=/scratch/vvjumle/logs/lion_f08_%j.err
 
