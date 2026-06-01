@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --gpus-per-task=1
 #SBATCH --mem-per-cpu=4G
-#SBATCH --account=Education-EEMCS-MSc-DSAIT
+#SBATCH --account=education-eemcs-courses-dsait4095
 #SBATCH --output=/scratch/vvjumle/logs/lion_train_%j.out
 #SBATCH --error=/scratch/vvjumle/logs/lion_train_%j.err
 
@@ -14,7 +14,7 @@ set -e
 
 REPO=/scratch/vvjumle/LION-but-better/img_classification
 DATA=/scratch/vvjumle/imagenet-folder
-OUTPUT=/scratch/vvjumle/checkpoints/lion_tiny_decay
+OUTPUT=/scratch/vvjumle/checkpoints/lion_tiny_learned
 
 mkdir -p /scratch/vvjumle/logs
 mkdir -p $OUTPUT
@@ -33,9 +33,9 @@ echo "=== Starting LION-D Tiny training ==="
 torchrun --nproc_per_node=1 --master_port=29500 main_lion.py \
     --model lion_tiny_patch16_224 \
     --data-path $DATA \
-    --batch-size 64 \
+    --batch-size 256 \
     --mask_type Decay \
-    --format RNN \
+    --format Attention \
     --epochs 30 \
     --output_dir $OUTPUT \
     --num_workers 8
