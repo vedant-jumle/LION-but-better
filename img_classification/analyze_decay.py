@@ -14,7 +14,7 @@ def main():
     parser.add_argument('--out', default='decay_analysis.png')
     args = parser.parse_args()
 
-    ckpt = torch.load(args.checkpoint, map_location='cpu')
+    ckpt = torch.load(args.checkpoint, map_location='cpu', weights_only=False)
     state = ckpt['model'] if 'model' in ckpt else ckpt
 
     decay_data = {}
