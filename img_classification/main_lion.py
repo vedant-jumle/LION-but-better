@@ -201,6 +201,8 @@ def get_args_parser():
                         help='Initialize all a_i to logit(value) but keep learnable.')
     parser.add_argument('--structured_init', action='store_true', default=False,
                         help='Init a_i at layer l as logit(0.5 + 0.4*l/L), learnable.')
+    parser.add_argument('--per_layer_decay', action='store_true', default=False,
+                        help='Use one shared lambda per layer instead of per head (12 scalars vs 36).')
     return parser
 
 
@@ -291,6 +293,7 @@ def main(args):
         order = args.order,
         format = args.format,
         chunk_size = args.chunk_size,
+        per_layer_decay = args.per_layer_decay,
 
     )
 
