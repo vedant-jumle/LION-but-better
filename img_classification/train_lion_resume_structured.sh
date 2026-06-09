@@ -1,19 +1,19 @@
 #!/bin/bash
-#SBATCH --job-name=lion_init09
+#SBATCH --job-name=lion_rstruct
 #SBATCH --partition=gpu-v100
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gpus-per-task=1
 #SBATCH --mem-per-cpu=4G
-#SBATCH --output=/scratch/vvjumle/logs/lion_init09_%j.out
-#SBATCH --error=/scratch/vvjumle/logs/lion_init09_%j.err
+#SBATCH --output=/scratch/vvjumle/logs/lion_rstruct_%j.out
+#SBATCH --error=/scratch/vvjumle/logs/lion_rstruct_%j.err
 
 set -e
 
 REPO=/scratch/vvjumle/LION-but-better-experiments/img_classification
 DATA=/scratch/vvjumle/imagenet-folder
-OUTPUT=/scratch/vvjumle/checkpoints/lion_tiny_init09
+OUTPUT=/scratch/vvjumle/checkpoints/lion_tiny_structured
 
 mkdir -p /scratch/vvjumle/logs
 mkdir -p $OUTPUT
@@ -28,15 +28,16 @@ cd $REPO
 echo "=== GPU info ==="
 nvidia-smi
 
-echo "=== Starting LION-D Tiny training (init lambda=0.9, learnable) ==="
-torchrun --nproc_per_node=1 --master_port=29502 main_lion.py \
+echo "=== Resuming LION-D Tiny training (structured depth-wise init, learnable) to epoch 60 ==="
+torchrun --nproc_per_node=1 --master_port=29506 main_lion.py \
     --model lion_tiny_patch16_224 \
     --data-path $DATA \
     --batch-size 256 \
     --mask_type Decay \
     --format Attention \
-    --epochs 30 \
-    --init_decay 0.9 \
+    --epochs 60 \
+    --structured_init \
+    --resume $OUTPUT/checkpoint.pth \
     --output_dir $OUTPUT \
     --num_workers 8
 
